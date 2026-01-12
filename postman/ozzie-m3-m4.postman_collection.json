@@ -1,0 +1,116 @@
+{
+  "info": {
+    "name": "Ozzie Milestone 3+4 Demo API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/health"
+      }
+    },
+    {
+      "name": "Get Me",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/me"
+      }
+    },
+    {
+      "name": "Onboard Parent",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/api/me",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"dob\": \"1990-01-01\",\n  \"consent\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "List Children",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/children"
+      }
+    },
+    {
+      "name": "Create Child",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/api/children",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Amina\",\n  \"age\": 7,\n  \"avatar\": \"Crescent\"\n}"
+        }
+      }
+    },
+    {
+      "name": "List Surahs",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/content/surahs"
+      }
+    },
+    {
+      "name": "Surah Detail",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/content/surahs/1"
+      }
+    },
+    {
+      "name": "Submit Attempt",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/api/progress/attempt",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"childId\": \"child_id\",\n  \"wordId\": 1,\n  \"accuracy\": 0.9,\n  \"deviceAttemptId\": \"device-attempt-123\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Sync Attempts",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/api/progress/sync",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"childId\": \"child_id\",\n  \"attempts\": [\n    {\n      \"childId\": \"child_id\",\n      \"wordId\": 1,\n      \"accuracy\": 0.85,\n      \"deviceAttemptId\": \"device-attempt-abc\"\n    }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Progress Summary",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/progress/summary?childId=child_id"
+      }
+    },
+    {
+      "name": "Delete Account",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/account/delete"
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" }
+  ]
+}

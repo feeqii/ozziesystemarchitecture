@@ -1,0 +1,359 @@
+openapi: 3.0.3
+info:
+  title: Ozzie Milestone 3+4 Demo API
+  version: 1.0.0
+  description: REST endpoints for authentication, profiles, content, and progress tracking.
+servers:
+  - url: http://localhost:3000
+security:
+  - clerkAuth: []
+paths:
+  /api/health:
+    get:
+      summary: Health check
+      security: []
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  timestamp:
+                    type: string
+  /api/me:
+    get:
+      summary: Get parent profile
+      responses:
+        "200":
+          description: Parent user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  parent:
+                    $ref: "#/components/schemas/ParentUser"
+    post:
+      summary: Onboard parent user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OnboardingRequest"
+      responses:
+        "200":
+          description: Parent user saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  parent:
+                    $ref: "#/components/schemas/ParentUser"
+  /api/children:
+    get:
+      summary: List child profiles
+      responses:
+        "200":
+          description: Child profiles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  children:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ChildProfile"
+    post:
+      summary: Create a child profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChildCreateRequest"
+      responses:
+        "200":
+          description: Child profile created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  child:
+                    $ref: "#/components/schemas/ChildProfile"
+  /api/content/surahs:
+    get:
+      summary: List surahs
+      security: []
+      responses:
+        "200":
+          description: Surah list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  surahs:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Surah"
+  /api/content/surahs/{id}:
+    get:
+      summary: Get surah detail
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Surah detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  surah:
+                    $ref: "#/components/schemas/SurahDetail"
+  /api/progress/attempt:
+    post:
+      summary: Submit a word attempt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttemptRequest"
+      responses:
+        "200":
+          description: Attempt stored
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  attempt:
+                    $ref: "#/components/schemas/Attempt"
+  /api/progress/sync:
+    post:
+      summary: Sync offline attempts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SyncRequest"
+      responses:
+        "200":
+          description: Sync summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  createdCount:
+                    type: integer
+                  duplicateCount:
+                    type: integer
+  /api/progress/summary:
+    get:
+      summary: Get child progress summary
+      parameters:
+        - name: childId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Summary response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgressSummary"
+  /api/account/delete:
+    post:
+      summary: Delete account and child data
+      responses:
+        "200":
+          description: Account deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted:
+                    type: boolean
+components:
+  securitySchemes:
+    clerkAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    ParentUser:
+      type: object
+      properties:
+        id:
+          type: string
+        clerkUserId:
+          type: string
+        dob:
+          type: string
+        consentAt:
+          type: string
+    ChildProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        parentId:
+          type: string
+        name:
+          type: string
+        age:
+          type: integer
+        avatar:
+          type: string
+          nullable: true
+    Surah:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        nameEn:
+          type: string
+    Word:
+      type: object
+      properties:
+        id:
+          type: integer
+        position:
+          type: integer
+        textArabic:
+          type: string
+        translation:
+          type: string
+        transliteration:
+          type: string
+        audioUrl:
+          type: string
+          nullable: true
+    Verse:
+      type: object
+      properties:
+        id:
+          type: integer
+        verseNumber:
+          type: integer
+        textArabic:
+          type: string
+        translation:
+          type: string
+        transliteration:
+          type: string
+        words:
+          type: array
+          items:
+            $ref: "#/components/schemas/Word"
+    SurahDetail:
+      allOf:
+        - $ref: "#/components/schemas/Surah"
+        - type: object
+          properties:
+            verses:
+              type: array
+              items:
+                $ref: "#/components/schemas/Verse"
+    Attempt:
+      type: object
+      properties:
+        id:
+          type: string
+        childId:
+          type: string
+        wordId:
+          type: integer
+        accuracy:
+          type: number
+        createdAt:
+          type: string
+        deviceAttemptId:
+          type: string
+    OnboardingRequest:
+      type: object
+      required:
+        - dob
+        - consent
+      properties:
+        dob:
+          type: string
+        consent:
+          type: boolean
+          enum: [true]
+    ChildCreateRequest:
+      type: object
+      required:
+        - name
+        - age
+      properties:
+        name:
+          type: string
+        age:
+          type: integer
+        avatar:
+          type: string
+    AttemptRequest:
+      type: object
+      required:
+        - childId
+        - wordId
+        - accuracy
+        - deviceAttemptId
+      properties:
+        childId:
+          type: string
+        wordId:
+          type: integer
+        accuracy:
+          type: number
+        deviceAttemptId:
+          type: string
+    SyncRequest:
+      type: object
+      required:
+        - childId
+        - attempts
+      properties:
+        childId:
+          type: string
+        attempts:
+          type: array
+          items:
+            $ref: "#/components/schemas/AttemptRequest"
+    ProgressSummary:
+      type: object
+      properties:
+        childId:
+          type: string
+        attemptCount:
+          type: integer
+        mastery:
+          type: object
+          properties:
+            mastered:
+              type: integer
+            learning:
+              type: integer
+            struggling:
+              type: integer

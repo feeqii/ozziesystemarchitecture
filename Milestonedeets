@@ -1,0 +1,333 @@
+MILESTONE 1: ARCHITECTURE & SETUP
+$2,800
+What You're Building:
+Complete architecture document (system design, tech stack selection, data
+flow)
+Development environment setup (repo, CI/CD, staging server)
+Third-party service evaluation and selection (Backend, storage, analytics,
+authen, etc.)
+Development roadmap with weekly checkpoints in line with milestones.
+Design system integration strategy (design tokens, component library handoff,
+designer-developer workflow)
+Security & COPPA compliance plan
+Risk assessment (top 10 risks with mitigation strategies)
+Development Service Agreement For Ozzie Mobile App (MVP) 11
+Success Criteria:
+Architecture approved (tech stack, costs documented)
+Full admin access granted (servers, all accounts)
+AI model research complete (3+ providers evaluated, recommendation with
+cost analysis)
+Realistic timeline (23-week roadmap, AI validation first, dependencies
+mapped)
+Third-party costs breakdown
+Service provider rationale documented (why each service was chosen over
+alternatives)
+Design system handoff process documented (how designs become code,
+component mapping, design-to-development workflow)
+COPPA compliance plan documented
+Walkthrough explaining architecture
+MILESTONE 2: AI SPEECH RECOGNITION
+$1,000
+What You're Building:
+Simple web-based test interface for AI Model validation (NOT production app)
+Integration with selected AI provider (Whisper/ Deepspeech /Wave2Vec
+/custom)
+Testing harness to validate 95% accuracy with real child recordings
+Success Criteria:
+≥95% accuracy (20+ different child recordings, words + tashkeel correct.
+Founder responsibility to provide).
+Simple test interface working (record audio → transcription → accuracy
+score) <3 seconds processing time
+Handles noise gracefully
+Development Service Agreement For Ozzie Mobile App (MVP) 12
+Cost validated
+Comparison report (spreadsheet with all 20 recordings, accuracy data)
+Integration approach documented for backend (Milestone 5)
+MILESTONE 3: BACKEND + CONTENT STRUCTURE
+$1,000
+What You're Building:
+Database schema (users, children, word-level progress tracking, content
+structure, adaptive learning data model)
+RESTful API framework prepared for authentication hooks (implemented in
+Milestone 4)
+Content architecture with word-level breakdown (verse-to-word mapping,
+individual word IDs)
+Audio file storage and management system (cloud-hosted vs. bundled,
+compression strategy, caching strategy)
+Data parsing and validation logic
+Progress persistence and local caching system with sync conflict resolution
+Database migration strategy (schema versioning, rollback procedures)
+Backup and disaster recovery plan (automated backups, retention policy,
+recovery procedures)
+API documentation (Postman collection for testing)
+Content Loading: 2 Surahs hardcoded with Arabic, tashkeel, translation,
+transliteration
+Success Criteria:
+APIs functional (Postman collection works: create user, add child, save
+progress, retrieve content including audio)
+Content structure explicit , each verse has
+Arabic/tashkeel/translation/transliteration with individual audio reference).
+Development Service Agreement For Ozzie Mobile App (MVP) 13
+Audio file management working (audio files retrievable via API, caching
+strategy functional, compression verified)
+Adaptive learning data model implemented (per-child, per-word accuracy
+tracking, attempt history, feedback level progression, mistake patterns)
+Performance good (API <500ms response under simulated 100+ concurrent
+user load, and how it would be with +10,000 concurrent user load).
+Data validation working (invalid inputs rejected with clear errors)
+Local caching functional (content cached offline, progress syncs online, sync
+conflicts resolved gracefully)
+Database migration strategy documented (schema versioning, rollback
+procedures, test migration performed)
+[Backup system operational (automated backups scheduled, restoration
+tested successfully)
+Security basics (SQL injection prevention, encrypted passwords, secure audio
+file access)
+Schema scalable with documented migration path for future features
+[Error handling & logging (doesn't crash on bad inputs, detailed logs for
+debugging)
+Documentation complete (each API endpoint has example request/response,
+audio file access patterns documented)
+MILESTONE 4: AUTH & PROFILES
+$1,000
+What You're Building:
+Parent registration and login (email/password + Google/Apple Sign-In with
+privacy disclosure)
+Age verification for parent (birth date collection and validation)
+Email verification system
+Child profile creation (up to 3 per parent account)
+Development Service Agreement For Ozzie Mobile App (MVP) 14
+Password reset flow (email-based, security tested against common
+vulnerabilities)
+Account recovery procedure (if email access lost)
+Profile editing (name, age, avatar)
+Profile data isolation (child-level access control, API validation preventing
+cross-profile access)
+COPPA-compliant parental consent flow
+Success Criteria:
+Account creation working (register, verify email, login, add 3 child profiles)
+Age verification functional (parent birth date collected, validates adult age)
+Password reset functional (full flow from request to new password)
+Account recovery documented (procedure if parent loses email access)
+Fast registration (<3 screens, <2 minutes, clear privacy disclosures)
+Social login working (Google/Apple Sign-In with error handling)
+Child profiles secure (separate data, cannot access other profiles)
+Session handling proper (tokens expire, refresh works, logout clears data)
+Security testing complete (rate limiting on login attempts, session hijacking
+prevention, password reset vulnerabilities assessed)
+Account deletion works (parent can delete account, all child data purged,
+timeline documented)
+COPPA consent flow complete (verifiable parental consent method
+implemented, legally compliant)
+MILESTONE 5: ADAPTIVE LEARNING SYSTEM
+$1,000
+What You're Building:
+Backend integration of proven AI model (from Milestone 2) into production app
+Development Service Agreement For Ozzie Mobile App (MVP) 15
+Complete adaptive learning algorithm with documented flow chart showing
+all state transitions
+Smart feedback system that adapts to each child's learning pattern with
+explicit mastery criteria
+Per-child, per-verse progress tracking across sessions
+4-level adaptive feedback escalation
+Age-appropriate messaging system (8-9 year old level)
+Feedback message library (minimum 10+ unique messages, variety system
+prevents repetition)
+Cross-session memory system (session resumption logic, retention
+verification, regression handling)
+Adaptive playback modes (full verse / word focus
+Success Criteria:
+AI integrated into production (proven AI from M2 now works in app, maintains
+95% accuracy, <3 seconds processing time)
+Progress tracking per child/word (tracks attempts, successes, difficulty level
+across sessions)
+4-level adaptive feedback working:
+Level 1: Encouragement + expert audio (3 Trials)
+Level 2: Isolated practice mode (mastery = Y consecutive correct at Z%
+accuracy) → specify exact criteria)
+Level 3: Repeat Level 1 till success.
+Level 4: Maximum struggle threshold with human escalation path (Notification
+to parent ?)
+Visual feedback clear (Green/Yellow/Red, synced <100ms)
+Adaptive playback modes (full verse / word focus / syllable, system picks
+based on progress)
+Development Service Agreement For Ozzie Mobile App (MVP) 16
+10 test scenarios verify (escalation, celebrations, memory, per-child
+personalization)
+MILESTONE 6: UI SCREENS & CONTENT STRUCTURE
+$1,000
+What You're Building:
+Main learning screen (Arabic text + translation + transliteration display)
+High-quality audio playback system with controls (play, pause, speed
+adjustment)
+Word-by-word audio highlighting (karaoke style synchronization)
+Recording interface integrated (record button, playback)
+Integration with designer's Figma design system & Rive animation properly
+Responsive layouts for tablets and phones
+Success Criteria:
+Design integration complete (matches Figma >90%, design system
+implemented, Figma-to-Flutter workflow established)
+Professional on all devices (iOS/Android, tablets/phones, landscape/portrait)
+Performance excellent (transitions <300ms, scrolling 60fps, audio <200ms,
+recording <300ms)
+Audio synced perfectly (word highlighting <100ms timing accuracy)
+Fast loading (learning screen <3 sec, verse switching <500ms, cached
+<100ms)
+Audio quality excellent (crystal clear, no distortion, proper volume)
+MILESTONE 7: ANIMATION INTEGRATION
+$500
+What You're Building:
+Development Service Agreement For Ozzie Mobile App (MVP) 17
+Ozzie mascot character with Rive animations (celebration, encouragement,
+thinking, happy, supportive)
+Context-appropriate mascot appearances (achievements, mistakes,
+milestones, first login, daily return)
+Dialogue system with text bubbles (encouraging messages tied to learning
+events)
+UI micro-interactions and transitions throughout app (button presses, screen
+transitions, celebrations)
+Loading animations and progress indicators
+Smooth performance (30+ fps animations, minimal impact on app speed)
+Success Criteria:
+Ozzie integrated (appears at right moments, animations smooth 30+ fps, loads
+<1 sec, <500KB assets)
+Context-appropriate (onboarding, first verse, mistakes, achievements, daily
+return feel natural)
+Dialogue system functional (text bubbles clear, age-appropriate, consistent
+personality, dismissible)
+UI animations polished (button press, transitions, celebrations, loading,
+progress bars)
+Performance optimized (no slowdown on 3-year-old devices, no frame drops,
+minimal memory/battery)
+MILESTONE 8: GAMIFICATION
+$500
+What You're Building:
+Progress tracking system (verses memorized, accuracy scores, time spent
+learning, attempt history)
+Achievement badge system (5+ badges: first verse, perfect recitation, 7-day
+streak, Surah complete, etc.)
+Development Service Agreement For Ozzie Mobile App (MVP) 18
+Daily streak counter with visual indicators and grace period
+Celebration screens with confetti, badges, Ozzie reactions
+Progress charts (accuracy trends over time, practice consistency,
+improvement visualization)
+Motivational milestones (encourage continued learning)
+Success Criteria:
+Progress tracked accurately (data persists, no loss, updates real-time)
+Badges meaningful (unlock at appropriate milestones, not too easy/hard)
+Celebrations immediate (visual feedback <1 sec, feels rewarding)
+Parent view matches (same data in child/parent views, no discrepancies)
+Streak logic fair (1-day grace period, doesn't punish weekends)
+Charts useful (accuracy trends visible, improvement clear, motivating)
+Age-appropriate (suitable for 6-12 yr olds, not addictive mechanics)
+MILESTONE 9: PARENT DASHBOARD
+$1,000
+What You're Building:
+Parent dashboard showing all children's progress at-a-glance
+Detailed analytics per child (time spent, verses memorized, accuracy trends,
+practice patterns)
+Time limit controls (daily caps, scheduling, enforcement mechanism)
+Progress reports (weekly/monthly summaries, downloadable PDFs for
+printing/sharing)
+Notification settings (daily reminders, milestone alerts, customizable
+frequency)
+Multi-child management interface
+Success Criteria:
+Development Service Agreement For Ozzie Mobile App (MVP) 19
+Dashboard fast (loads all children's data <3 seconds)
+Analytics accurate (verified against actual usage, updates real-time, insights
+actionable)
+Time controls work (child cannot bypass, tested with multiple attempts,
+graceful limit handling)
+Multi-child easy (switch smoothly, comparison view helpful, no confusion)
+Notifications timely (work reliably, customizable, not annoying)
+MILESTONE 10: SECURITY & COMPLIANCE
+$500
+What You're Building:
+Data encryption implementation
+COPPA compliance verification (parental consent, data minimization, no
+behavioral tracking)
+GDPR compliance (data export functionality, deletion requests, privacy
+controls)
+Security audit and penetration testing
+Privacy policy integration (accessible in-app, clear language)
+Success Criteria:
+Encryption verified (all sensitive data encrypted, HTTPS for 100% traffic, valid
+certificates)
+COPPA compliant (consent flow meets requirements, compliance checklist
+complete)
+Data deletion works (test export/deletion with test account, all data removed)
+Security audit complete (penetration testing done, zero critical vulnerabilities,
+mitigation plans for medium issues)
+Privacy policy accessible (in app settings and onboarding, plain English,
+covers all data practices)
+Development Service Agreement For Ozzie Mobile App (MVP) 20
+MILESTONE 11: TESTING & OPTIMIZATION
+$1,500
+What You're Building:
+Comprehensive testing suite (unit tests, integration tests, end-to-end tests, AI-
+specific tests)
+Device testing across different devices up to 5 years old (IOS, Android, various
+screen sizes).
+Beta testing program with 10 families for 2 weeks (real children testing AI in
+homes)
+Bug fixes prioritized and resolved (all critical P0, 95%+ of high/medium
+priority P1/P2)
+Performance optimization (load times, battery, memory, network efficiency)
+Success Criteria:
+Crash rate low (<1% across all devices and OS versions)
+Bugs resolved (all P0 fixed, 95%+ P1/P2 fixed, P3 documented)
+Beta validation (10 families test 2 weeks, 80%+ positive feedback)
+AI works with real kids (>95% accuracy in real homes, not controlled tests)
+Device coverage (tested on 5+ devices, all performance standards met)
+MILESTONE 12: APP STORE LAUNCH + HANDOVER
+$1,000
+What You're Building:
+iOS App Store submission
+Google Play Store submission
+App store listings optimized (screenshots, descriptions, keywords, preview
+videos)
+Post-launch monitoring setup (analytics dashboards, crash reporting, user
+feedback channels)
+Development Service Agreement For Ozzie Mobile App (MVP) 21
+Complete code handover (full repository access, deployment keys)
+Complete documentation handover (architecture, APIs, deployment guide,
+troubleshooting, maintenance procedures)
+Success Criteria:
+Both apps approved (iOS App Store and Google Play approved)
+100 families onboarded (invites sent, users can download/launch, onboarding
+emails sent)
+Store listings optimized (professional screenshots, compelling descriptions,
+preview videos)
+Monitoring active (analytics tracking, crash reporting functional, dashboards
+accessible)
+Full ownership access (admin on App Store Connect, Play Console, all hosting,
+all third-party services)
+Complete code handover (repo admin access, all branches, documented
+code, setup instructions)
+Complete documentation (architecture, APIs, deployment, troubleshooting,
+maintenance procedures)
+MILESTONE 13: POST-LAUNCH SUPPORT
+$1,200
+What You're Building:
+Active monitoring of +100 beta families using app in real homes (not controlled
+testing)
+Critical bug fixes based on production usage patterns
+AI optimization based on real-world child recordings (not test data)
+UX refinements based on actual parent and child feedback
+Performance improvements discovered through production analytics
+Ensures product actually works in diverse real-world conditions before final
+handover
+Development Service Agreement For Ozzie Mobile App (MVP) 22
+Success Criteria:
+8-weeks active monitoring (daily check of crashes/feedback/analytics, weekly
+syncs)
+Critical bugs fixed (P0 <48 hours, P1 <1 week, P2 if >10% users affected)
+Real-world AI optimized (500+ recordings analyzed, >90% accuracy
+maintained, device issues fixed)
+Performance maintained (<1% crash rate, <5% battery/30min, edge cases
+handled)
+Parent satisfaction (op 5 usability issues fixed, Ozzie adjusted if needed, stuck
+flows optimized, top 3 complaints addressed, dashboard improved if quick fixes)
+Final handover (all issues documented, known issues list, V2
+recommendations, walkthrough)

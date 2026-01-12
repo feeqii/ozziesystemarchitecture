@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model ParentUser {
+  id          String         @id @default(cuid())
+  clerkUserId String         @unique
+  dob         DateTime
+  consentAt   DateTime
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  children    ChildProfile[]
+}
+
+model ChildProfile {
+  id        String    @id @default(cuid())
+  parentId  String
+  name      String
+  age       Int
+  avatar    String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  parent    ParentUser @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  attempts  Attempt[]
+  mastery   Mastery[]
+}
+
+model Surah {
+  id        Int      @id
+  name      String
+  nameEn    String
+  verses    Verse[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Verse {
+  id              Int      @id
+  surahId         Int
+  verseNumber     Int
+  textArabic      String
+  translation     String
+  transliteration String
+  words           Word[]
+  surah           Surah    @relation(fields: [surahId], references: [id], onDelete: Cascade)
+}
+
+model Word {
+  id              Int      @id
+  verseId         Int
+  position        Int
+  textArabic      String
+  translation     String
+  transliteration String
+  audioUrl        String?
+  verse           Verse    @relation(fields: [verseId], references: [id], onDelete: Cascade)
+  attempts        Attempt[]
+  mastery         Mastery[]
+}
+
+model Attempt {
+  id              String   @id @default(cuid())
+  childId         String
+  wordId          Int
+  accuracy        Float
+  createdAt       DateTime @default(now())
+  deviceAttemptId String   @unique
+  child           ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  word            Word         @relation(fields: [wordId], references: [id], onDelete: Cascade)
+}
+
+model Mastery {
+  id            String   @id @default(cuid())
+  childId       String
+  wordId        Int
+  status        String
+  streak        Int
+  lastAttemptAt DateTime
+  child         ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  word          Word         @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@unique([childId, wordId])
+}
