@@ -35,6 +35,9 @@ export default function Home() {
                 <Button asChild size="lg">
                   <Link href="/demo">Launch Demo</Link>
                 </Button>
+                <Button asChild size="lg" variant="secondary">
+                  <Link href="/architecture">System Architecture</Link>
+                </Button>
                 <Button asChild variant="outline" size="lg">
                   <Link href="/api-docs">API Docs</Link>
                 </Button>
