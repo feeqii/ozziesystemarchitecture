@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, CheckCircle2 } from "lucide-react";
 import { MermaidDiagram } from "@/components/mermaid/MermaidDiagram";
 import { HeroOrbit } from "@/components/react-bits/hero-orbit";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +36,12 @@ export default function ArchitecturePage() {
         <div className="relative overflow-hidden rounded-3xl border bg-background/80 p-10 shadow-sm">
           <HeroOrbit />
           <div className="relative space-y-4">
+            <Button asChild variant="ghost" size="sm" className="w-fit">
+              <Link href="/" className="flex items-center gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Back to home
+              </Link>
+            </Button>
             <Badge className="rounded-full px-4 py-1 text-xs uppercase tracking-[0.2em]">
               Architecture Tour
             </Badge>
@@ -64,18 +70,6 @@ export default function ArchitecturePage() {
                   Detailed
                 </Button>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {focusAreas.map((area) => (
-                  <Button
-                    key={area}
-                    size="sm"
-                    variant={focus === area ? "default" : "outline"}
-                    onClick={() => setFocus(area)}
-                  >
-                    {area}
-                  </Button>
-                ))}
-              </div>
             </div>
           </div>
         </div>
@@ -100,15 +94,41 @@ export default function ArchitecturePage() {
                     progress tracking.
                   </p>
                 </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                    Focus
+                  </p>
+                  {focusAreas.map((area) => (
+                    <Button
+                      key={area}
+                      size="sm"
+                      variant={focus === area ? "default" : "outline"}
+                      onClick={() => setFocus(area)}
+                    >
+                      {area}
+                    </Button>
+                  ))}
+                </div>
                 <MermaidDiagram diagram={systemOverview[focus]} />
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
                     <p className="text-sm font-semibold">What this means</p>
                     <p className="text-sm text-muted-foreground">
-                      Parents authenticate, the app talks to secure APIs, content
-                      comes from the seeded Quran data, and progress is stored in
-                      a structured database.
+                      A parent signs in, then the app asks for content and saves
+                      learning progress. The content is already organized into
+                      Surahs, verses, and word IDs, so the app can fetch it
+                      quickly and consistently.
                     </p>
+                    {isDetailed ? (
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        The “API routes” are the endpoints the app calls for
+                        content and progress, while “Prisma” is the helper that
+                        reads and writes to the database for us. Milestone 3
+                        proves the content structure and progress tracking
+                        work, and Milestone 4 adds secure parent access on top
+                        of that flow.
+                      </p>
+                    ) : null}
                   </div>
                   {isDetailed ? (
                     <div>
@@ -150,10 +170,19 @@ export default function ArchitecturePage() {
                   <div>
                     <p className="text-sm font-semibold">What this means</p>
                     <p className="text-sm text-muted-foreground">
-                      The onboarding flow (Milestone 4) and the learning flow
-                      (Milestone 3) are connected end-to-end with offline sync in
-                      the middle.
+                      This is the step-by-step experience a parent sees: sign in,
+                      confirm consent, create a child, load content, and tap
+                      words to record progress. The offline queue lets the app
+                      keep working even without internet and sync later.
                     </p>
+                    {isDetailed ? (
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Milestone 4 covers the sign-in and onboarding pieces,
+                        while Milestone 3 covers content delivery, attempts, and
+                        mastery updates. The sync step proves attempts are
+                        idempotent, so repeated uploads don’t create duplicates.
+                      </p>
+                    ) : null}
                   </div>
                   {isDetailed ? (
                     <div>
@@ -220,9 +249,19 @@ export default function ArchitecturePage() {
                   <div>
                     <p className="text-sm font-semibold">What this means</p>
                     <p className="text-sm text-muted-foreground">
-                      Every child has progress tied to specific words inside
-                      verses, so mastery can be measured precisely.
+                      We store the Quran in layers (Surah → Verse → Word), and
+                      each child’s progress is tied to individual words. That
+                      makes it easy to see what they’ve mastered and what still
+                      needs practice.
                     </p>
+                    {isDetailed ? (
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Attempts capture accuracy per word, and mastery keeps a
+                        running status and streak. This is the backbone for
+                        adaptive learning in Milestone 3 and continues to work
+                        securely per child once Milestone 4 auth is applied.
+                      </p>
+                    ) : null}
                   </div>
                   {isDetailed ? (
                     <div>
@@ -307,17 +346,106 @@ export default function ArchitecturePage() {
                 Next steps once designs arrive
               </h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                This is how the mobile UI will plug into what we already built.
+                These next steps are planned once mobile UI inputs are available
+                and are not required to validate the current demo.
               </p>
-              <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-                <li>Use the same REST endpoints from the mobile app UI.</li>
-                <li>Swap SQLite for hosted Postgres (or Supabase) via Prisma.</li>
-                <li>Replace localStorage queue with AsyncStorage for offline sync.</li>
-                <li>Add CI/CD pipeline for staging + production deployments.</li>
-                <li>Provision environment variables for Clerk + database + APIs.</li>
-                <li>Expand content seeding to cover the full Quran.</li>
-                <li>Add analytics + error monitoring for release readiness.</li>
-              </ul>
+              <div className="mt-6 space-y-6">
+                <div>
+                  <h3 className="font-display text-xl">
+                    Next steps after mobile UI: Milestone 3
+                  </h3>
+                  <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                    <li className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">Documentation</Badge>
+                      <span>Write the migration + rollback plan for data changes.</span>
+                    </li>
+                    <li className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">Hosting</Badge>
+                      <span>Document backups + restore steps for the database.</span>
+                    </li>
+                    <li className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">Documentation</Badge>
+                      <span>Add a simple performance target + load test note.</span>
+                    </li>
+                    <li className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">Safety</Badge>
+                      <span>Document error logging and monitoring expectations.</span>
+                    </li>
+                    <li className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">Documentation</Badge>
+                      <span>Explain how offline sync conflicts are resolved.</span>
+                    </li>
+                    <li className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">Safety</Badge>
+                      <span>Clarify input validation and error messages for APIs.</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="font-display text-xl">
+                    Next steps after mobile UI: Milestone 4
+                  </h3>
+                  <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                    <li className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">Screens</Badge>
+                      <span>Add child profile editing (name, age, avatar).</span>
+                    </li>
+                    <li className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">Legal</Badge>
+                      <span>Upgrade COPPA consent beyond a simple checkbox.</span>
+                    </li>
+                    <li className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">Documentation</Badge>
+                      <span>Document email verification and password reset flows.</span>
+                    </li>
+                    <li className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">Documentation</Badge>
+                      <span>Confirm Google/Apple sign-in settings in Clerk.</span>
+                    </li>
+                    <li className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">Screens</Badge>
+                      <span>Add account deletion UI with confirmation.</span>
+                    </li>
+                    <li className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">Safety</Badge>
+                      <span>Document session behavior and logout expectations.</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="font-display text-xl">
+                    Next steps after mobile UI: Production hardening
+                  </h3>
+                  <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                    <li className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">Hosting</Badge>
+                      <span>Move SQLite to hosted Postgres or Supabase.</span>
+                    </li>
+                    <li className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">Hosting</Badge>
+                      <span>Set up CI/CD for staging and production releases.</span>
+                    </li>
+                    <li className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">Hosting</Badge>
+                      <span>Centralize environment variables and secrets.</span>
+                    </li>
+                    <li className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">Screens</Badge>
+                      <span>Switch offline queue to AsyncStorage on mobile.</span>
+                    </li>
+                    <li className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">Safety</Badge>
+                      <span>Add rate limiting and abuse protection.</span>
+                    </li>
+                    <li className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">Documentation</Badge>
+                      <span>Add monitoring + analytics for launch readiness.</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </Card>
 
             <Card className="p-6">
