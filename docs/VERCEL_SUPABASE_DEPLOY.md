@@ -10,25 +10,39 @@ This guide switches the demo from SQLite to Supabase Postgres and deploys to Ver
    `postgresql://USER:PASSWORD@HOST:5432/DB?sslmode=require`
 4. Keep the pooled connection string handy for Vercel runtime usage (if offered).
 
-## 2) Configure Prisma for Postgres
+## 2) Set local environment variables
 
-1. Confirm `prisma/schema.prisma` uses `provider = "postgresql"`.
-2. Set your local `.env` `DATABASE_URL` to the **Direct** Supabase URI.
-   - This is the safest string for migrations and seeding.
+1. Set your local `.env` `DATABASE_URL` to the **Direct** Supabase URI.
+2. Ensure Clerk env vars are set locally if you plan to test:
+   - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+   - `CLERK_SECRET_KEY`
+   - `NEXT_PUBLIC_APP_URL`
+   - `NEXT_PUBLIC_CLERK_SIGN_IN_URL`
+   - `NEXT_PUBLIC_CLERK_SIGN_UP_URL`
+   - `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL`
+   - `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL`
 
-## 3) Run Prisma migrations against Supabase
+## 3) Generate Prisma client
 
 From the repo root:
 
 ```bash
-npx prisma migrate deploy
+npx prisma generate
 ```
 
-This applies the existing migrations to Supabase.
+## 4) Push schema to Supabase (demo workflow)
 
-## 4) Run the seed script against Supabase
+From the repo root:
 
-From the repo root (with `DATABASE_URL` still pointing at Supabase):
+```bash
+npx prisma db push
+```
+
+We use `db push` for the demo because the Supabase database already has tables
+and `migrate deploy` will fail with P3005 on a non-empty schema. For a production
+workflow, we will reset or baseline the database and switch back to migrations.
+
+## 5) Run the seed script against Supabase
 
 ```bash
 npm run seed
@@ -36,7 +50,12 @@ npm run seed
 
 The seed script is idempotent, so re-running it does not duplicate Surahs, verses, or words.
 
-## 5) Deploy to Vercel and set environment variables
+## 6) Verify tables in Supabase
+
+Open **Table Editor** in Supabase and confirm these tables exist:
+`ParentUser`, `ChildProfile`, `Surah`, `Verse`, `Word`, `Attempt`, `Mastery`.
+
+## 7) Deploy to Vercel and set environment variables
 
 1. Import the repo into Vercel and choose the default Next.js settings.
 2. In Vercel project settings, add the environment variables below:
@@ -52,7 +71,7 @@ The seed script is idempotent, so re-running it does not duplicate Surahs, verse
 
 3. Deploy the project.
 
-## 6) Update Clerk allowed origins and redirect URLs
+## 8) Update Clerk allowed origins and redirect URLs
 
 In the Clerk dashboard:
 
@@ -74,9 +93,12 @@ DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DB?sslmode=require" npm run s
 
 You can run this multiple times without duplicating rows.
 
-## Common errors
+## Troubleshooting
 
-- **Prisma migrate fails with P1001 / timeout**: The database is not reachable. Double-check the Supabase host, password, and that you are using the Direct (non-pooled) connection string for migrations.
-- **Prisma migrate fails with connection closed / P1017**: You are likely using a pooled connection string for migrations. Switch `DATABASE_URL` to the Direct connection string and retry.
-- **Invalid connection string**: Ensure the URI starts with `postgresql://` and includes `sslmode=require`.
-- **Clerk redirect errors ("redirect URL not allowed")**: Add the Vercel domain to Clerk Allowed Origins and include the sign-in/sign-up/demo/onboarding URLs in Redirect URLs.
+- **P3005 on migrate deploy**: The database is not empty. Use `npx prisma db push`
+  for the demo. For production, reset or baseline and switch back to migrations.
+- **IPv6 direct connection errors**: If the direct connection fails due to IPv6,
+  use the pooled connection string for runtime and connect from a network that
+  supports IPv4 for local `db push`/seed steps.
+- **Seed fails after schema changes**: If you see type or missing field errors,
+  run `npx prisma generate` to refresh the Prisma client before re-running the seed.
