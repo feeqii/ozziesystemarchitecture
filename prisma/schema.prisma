@@ -43,10 +43,14 @@ model ChildProfile {
   lastPracticeAt DateTime?  // For streak logic  
   isDeleted      Boolean    @default(false)
   deletedAt      DateTime?  @db.Timestamptz(6)
+  // Phase 2: XP and gamification
+  totalXp        Int        @default(0)
+  level          Int        @default(1)
   attempts       Attempt[]
   parent         ParentUser @relation(fields: [parentId], references: [id], onDelete: Cascade)
   mastery        Mastery[]
   sessions       Session[]
+  achievements   ChildAchievement[]
 }
 
 model Surah {
@@ -167,4 +171,29 @@ enum SessionStatus {
   COMPLETED
   ABANDONED
   FAILED
+}
+
+// Phase 2: Gamification - Achievement definitions
+model Achievement {
+  id          String             @id @default(cuid())
+  name        String             @unique // e.g., "FIRST_VERSE", "PERFECT_RECITATION"
+  displayName String             // Human-readable: "First Verse"
+  description String             // "Complete your first verse"
+  iconToken   String             // e.g., "BADGE_STAR", "BADGE_FIRE"
+  xpReward    Int                @default(0)
+  createdAt   DateTime           @default(now())
+  children    ChildAchievement[]
+}
+
+// Phase 2: Gamification - Child's earned achievements
+model ChildAchievement {
+  id            String       @id @default(cuid())
+  childId       String
+  achievementId String
+  earnedAt      DateTime     @default(now())
+  child         ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  achievement   Achievement  @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([childId, achievementId])
+  @@index([childId, earnedAt])
 }
