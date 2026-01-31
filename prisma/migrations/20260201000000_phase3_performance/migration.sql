@@ -45,6 +45,9 @@ $$ LANGUAGE plpgsql;
 -- ============================================
 -- Returns comprehensive stats for a child including recent activity
 
+-- Drop existing function if signature changed
+DROP FUNCTION IF EXISTS get_child_stats(TEXT);
+
 CREATE OR REPLACE FUNCTION get_child_stats(p_child_id TEXT)
 RETURNS TABLE (
   total_attempts BIGINT,
@@ -59,7 +62,7 @@ RETURNS TABLE (
   achievements_earned BIGINT,
   current_streak INT,
   longest_streak INT,
-  last_practice_at TIMESTAMPTZ
+  last_practice_at TIMESTAMP
 ) AS $$
 BEGIN
   RETURN QUERY
@@ -82,7 +85,7 @@ BEGIN
     COUNT(DISTINCT ca.id)::BIGINT as achievements_earned,
     COALESCE(c."currentStreak", 0) as current_streak,
     COALESCE(c."longestStreak", 0) as longest_streak,
-    c."lastPracticeAt" as last_practice_at
+    c."lastPracticeAt"::TIMESTAMP as last_practice_at
   FROM "ChildProfile" c
   LEFT JOIN "Attempt" a ON a."childId" = c.id
   LEFT JOIN "Mastery" m ON m."childId" = c.id
