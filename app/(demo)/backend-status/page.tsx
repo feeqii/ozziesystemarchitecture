@@ -34,6 +34,8 @@ export default async function BackendStatusPage() {
     wordCount,
     attemptCount,
     masteryCount,
+    achievementCount,
+    childAchievementCount,
     seededSurahs,
     recentAttempts,
   ] = await Promise.all([
@@ -44,6 +46,8 @@ export default async function BackendStatusPage() {
     prisma.word.count(),
     prisma.attempt.count(),
     prisma.mastery.count(),
+    prisma.achievement.count(), // Phase 2
+    prisma.childAchievement.count(), // Phase 2
     prisma.surah.findMany({
       where: { id: { in: [1, 112] } },
       select: { id: true },
@@ -72,6 +76,8 @@ export default async function BackendStatusPage() {
     { label: "Word", value: wordCount },
     { label: "Attempt", value: attemptCount },
     { label: "Mastery", value: masteryCount },
+    { label: "Achievement", value: achievementCount, badge: "Phase 2" }, // Phase 2
+    { label: "ChildAchievement", value: childAchievementCount, badge: "Phase 2" }, // Phase 2
   ];
 
   return (
@@ -91,7 +97,10 @@ export default async function BackendStatusPage() {
           <Card key={item.label}>
             <CardContent className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">{item.label}</p>
+                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                  {item.label}
+                  {'badge' in item && <Badge variant="outline" className="text-xs">{item.badge}</Badge>}
+                </p>
                 <p className="text-2xl font-semibold">{item.value}</p>
               </div>
             </CardContent>

@@ -69,6 +69,32 @@ type Summary = {
   };
 };
 
+// Phase 2: XP and Achievements types
+type XpStatus = {
+  totalXp: number;
+  level: number;
+  xpNeeded: number;
+  progress: number;
+  nextLevel: number;
+};
+
+type Achievement = {
+  id: string;
+  name: string;
+  displayName: string;
+  description: string;
+  iconToken: string;
+  xpReward: number;
+  earnedAt?: string;
+};
+
+type SyncResponse = {
+  createdCount: number;
+  duplicateCount: number;
+  xpEarned?: number;
+  achievementsEarned?: { name: string; displayName: string; xpReward: number }[];
+};
+
 const QUEUE_KEY = "ozzie-offline-queue";
 
 const checklistItems = [
@@ -163,6 +189,12 @@ export default function DemoPage() {
   const [childAge, setChildAge] = useState("");
   const [childAvatar, setChildAvatar] = useState("");
 
+  // Phase 2: Gamification state
+  const [xpStatus, setXpStatus] = useState<XpStatus | null>(null);
+  const [allAchievements, setAllAchievements] = useState<Achievement[]>([]);
+  const [childAchievements, setChildAchievements] = useState<Achievement[]>([]);
+  const [lastSyncResponse, setLastSyncResponse] = useState<SyncResponse | null>(null);
+
   useEffect(() => {
     const storedQueue = localStorage.getItem(QUEUE_KEY);
     if (!storedQueue) return;
@@ -247,6 +279,42 @@ export default function DemoPage() {
     loadSummary();
   }, [selectedChildId, queue.length]);
 
+  // Phase 2: Load XP status when child changes
+  useEffect(() => {
+    if (!selectedChildId) {
+      setXpStatus(null);
+      setChildAchievements([]);
+      return;
+    }
+    const loadGamificationData = async () => {
+      const [xpRes, achievementsRes] = await Promise.all([
+        fetch(`/api/progress/xp?childId=${selectedChildId}`),
+        fetch(`/api/children/${selectedChildId}/achievements`),
+      ]);
+      if (xpRes.ok) {
+        const data = await xpRes.json();
+        setXpStatus(data);
+      }
+      if (achievementsRes.ok) {
+        const data = await achievementsRes.json();
+        setChildAchievements(data.achievements ?? []);
+      }
+    };
+    loadGamificationData();
+  }, [selectedChildId, lastSyncResponse]);
+
+  // Phase 2: Load all available achievements once
+  useEffect(() => {
+    if (checkingParent) return;
+    const loadAllAchievements = async () => {
+      const res = await fetch("/api/achievements");
+      if (!res.ok) return;
+      const data = await res.json();
+      setAllAchievements(data.achievements ?? []);
+    };
+    loadAllAchievements();
+  }, [checkingParent]);
+
   const refreshSummary = async (childId: string) => {
     const res = await fetch(`/api/progress/summary?childId=${childId}`);
     if (!res.ok) return;
@@ -290,12 +358,27 @@ export default function DemoPage() {
       body: JSON.stringify({ childId: selectedChildId, attempts: queuedForChild }),
     });
     if (res.ok) {
+      const syncData: SyncResponse = await res.json();
+      setLastSyncResponse(syncData);  // Phase 2: Store for gamification UI
       setQueue((prev) => prev.filter((item) => item.childId !== selectedChildId));
       setSyncSuccess(true);
       setTimeout(() => setSyncSuccess(false), 2000);
       await refreshSummary(selectedChildId);
     }
     setSyncing(false);
+  };
+
+  // Phase 2: Helper to refresh gamification data
+  const refreshGamification = async (childId: string) => {
+    const [xpRes, achievementsRes] = await Promise.all([
+      fetch(`/api/progress/xp?childId=${childId}`),
+      fetch(`/api/children/${childId}/achievements`),
+    ]);
+    if (xpRes.ok) setXpStatus(await xpRes.json());
+    if (achievementsRes.ok) {
+      const data = await achievementsRes.json();
+      setChildAchievements(data.achievements ?? []);
+    }
   };
 
   const createChild = async () => {
@@ -356,6 +439,7 @@ export default function DemoPage() {
             <TabsTrigger value="profiles">Profiles</TabsTrigger>
             <TabsTrigger value="learn">Learn</TabsTrigger>
             <TabsTrigger value="progress">Progress</TabsTrigger>
+            <TabsTrigger value="gamification">🎮 XP & Achievements</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profiles" className="space-y-6">
@@ -596,6 +680,145 @@ export default function DemoPage() {
                   Select a child to load summary data.
                 </p>
               )}
+            </Card>
+          </TabsContent>
+
+          {/* Phase 2: Gamification Tab */}
+          <TabsContent value="gamification" className="space-y-6">
+            <Card className="p-6">
+              <h2 className="font-display text-2xl">🎯 XP & Level</h2>
+              <p className="text-sm text-muted-foreground">
+                Track experience points and level progression.
+              </p>
+              {!selectedChildId ? (
+                <p className="mt-4 text-sm text-muted-foreground">
+                  Select a child profile to view XP data.
+                </p>
+              ) : xpStatus ? (
+                <div className="mt-6 space-y-4">
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <Card className="p-4 bg-gradient-to-br from-yellow-500/10 to-orange-500/10">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                        Level
+                      </p>
+                      <p className="font-display text-4xl text-yellow-600">
+                        {xpStatus.level}
+                      </p>
+                    </Card>
+                    <Card className="p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                        Total XP
+                      </p>
+                      <p className="font-display text-3xl">{xpStatus.totalXp}</p>
+                    </Card>
+                    <Card className="p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                        XP to Level {xpStatus.nextLevel}
+                      </p>
+                      <p className="font-display text-3xl">{xpStatus.xpNeeded}</p>
+                    </Card>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Progress to Level {xpStatus.nextLevel}</span>
+                      <span>{xpStatus.progress}%</span>
+                    </div>
+                    <div className="h-3 w-full overflow-hidden rounded-full bg-secondary">
+                      <div
+                        className="h-full bg-gradient-to-r from-yellow-500 to-orange-500 transition-all duration-500"
+                        style={{ width: `${xpStatus.progress}%` }}
+                      />
+                    </div>
+                  </div>
+                  {lastSyncResponse && lastSyncResponse.xpEarned && lastSyncResponse.xpEarned > 0 && (
+                    <div className="rounded-lg border border-green-500/20 bg-green-500/10 p-3">
+                      <p className="text-sm text-green-600">
+                        ✨ Last sync: +{lastSyncResponse.xpEarned} XP earned!
+                        {lastSyncResponse.achievementsEarned && lastSyncResponse.achievementsEarned.length > 0 && (
+                          <span className="block mt-1">
+                            🏆 New achievement{lastSyncResponse.achievementsEarned.length > 1 ? 's' : ''}: {lastSyncResponse.achievementsEarned.map(a => a.displayName).join(', ')}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="mt-4 text-sm text-muted-foreground">Loading XP data...</p>
+              )}
+            </Card>
+
+            <Card className="p-6">
+              <h2 className="font-display text-2xl">🏆 Earned Achievements</h2>
+              <p className="text-sm text-muted-foreground">
+                Badges this child has unlocked.
+              </p>
+              {!selectedChildId ? (
+                <p className="mt-4 text-sm text-muted-foreground">
+                  Select a child profile to view achievements.
+                </p>
+              ) : childAchievements.length === 0 ? (
+                <p className="mt-4 text-sm text-muted-foreground">
+                  No achievements earned yet. Keep practicing!
+                </p>
+              ) : (
+                <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {childAchievements.map((achievement) => (
+                    <Card key={achievement.id} className="p-4 bg-gradient-to-br from-purple-500/10 to-pink-500/10">
+                      <div className="flex items-start gap-3">
+                        <span className="text-2xl">
+                          {achievement.iconToken === 'BADGE_STAR' && '⭐'}
+                          {achievement.iconToken === 'BADGE_TROPHY' && '🏆'}
+                          {achievement.iconToken === 'BADGE_FIRE' && '🔥'}
+                          {achievement.iconToken === 'BADGE_BOOK' && '📖'}
+                          {achievement.iconToken === 'BADGE_BRAIN' && '🧠'}
+                        </span>
+                        <div>
+                          <p className="font-semibold">{achievement.displayName}</p>
+                          <p className="text-xs text-muted-foreground">{achievement.description}</p>
+                          <Badge variant="secondary" className="mt-1">+{achievement.xpReward} XP</Badge>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            <Card className="p-6">
+              <h2 className="font-display text-2xl">📋 All Available Achievements</h2>
+              <p className="text-sm text-muted-foreground">
+                Complete list of achievements to unlock.
+              </p>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {allAchievements.map((achievement) => {
+                  const isEarned = childAchievements.some(ca => ca.name === achievement.name);
+                  return (
+                    <Card
+                      key={achievement.id}
+                      className={`p-4 transition-all ${isEarned ? 'bg-green-500/10 border-green-500/30' : 'opacity-60'}`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className="text-2xl">
+                          {achievement.iconToken === 'BADGE_STAR' && '⭐'}
+                          {achievement.iconToken === 'BADGE_TROPHY' && '🏆'}
+                          {achievement.iconToken === 'BADGE_FIRE' && '🔥'}
+                          {achievement.iconToken === 'BADGE_BOOK' && '📖'}
+                          {achievement.iconToken === 'BADGE_BRAIN' && '🧠'}
+                        </span>
+                        <div>
+                          <p className="font-semibold flex items-center gap-2">
+                            {achievement.displayName}
+                            {isEarned && <span className="text-green-600">✓</span>}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{achievement.description}</p>
+                          <Badge variant="secondary" className="mt-1">+{achievement.xpReward} XP</Badge>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
             </Card>
           </TabsContent>
         </Tabs>
