@@ -50,15 +50,22 @@ export async function POST(req: Request) {
       return jsonError("Parent must be at least 18 years old", 400);
     }
 
+    // Mamoon: Store dobDate as proper Date type (in addition to dob DateTime)
+    const dobDate = dob;
+
     const parent = await prisma.parentUser.upsert({
       where: { clerkUserId: userId },
       update: {
+        name: parsed.data.name ?? undefined, // Only update if provided
         dob,
+        dobDate, // Mamoon: Proper Date type
         consentAt: new Date(),
       },
       create: {
         clerkUserId: userId,
+        name: parsed.data.name ?? "",
         dob,
+        dobDate,
         consentAt: new Date(),
       },
     });

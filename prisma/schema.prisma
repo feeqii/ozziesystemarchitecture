@@ -8,81 +8,163 @@ datasource db {
 }
 
 model ParentUser {
-  id          String         @id @default(cuid())
-  clerkUserId String         @unique
-  dob         DateTime
-  consentAt   DateTime
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  children    ChildProfile[]
+  id                   String         @id @default(cuid())
+  clerkUserId          String         @unique
+  dob                  DateTime
+  consentAt            DateTime
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  supabaseUserId       String?        @unique @db.Uuid
+  name                 String         @default("") @db.VarChar(100)
+  isDeleted            Boolean        @default(false)
+  deletedAt            DateTime?      @db.Timestamptz(6)
+  subscriptionStatus   String?
+  subscriptionProvider String?
+  subscriptionId       String?
+  currentPeriodEnd     DateTime?      @db.Timestamptz(6)
+  trialEndsAt          DateTime?      @db.Timestamptz(6)
+  cancelAt             DateTime?      @db.Timestamptz(6)
+  canceledAt           DateTime?      @db.Timestamptz(6)
+  dobDate              DateTime?      @db.Date
+  AuditLog             AuditLog[]
+  children             ChildProfile[]
 }
 
 model ChildProfile {
-  id        String    @id @default(cuid())
-  parentId  String
-  name      String
-  age       Int
-  avatar    String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  parent    ParentUser @relation(fields: [parentId], references: [id], onDelete: Cascade)
-  attempts  Attempt[]
-  mastery   Mastery[]
+  id             String     @id @default(cuid())
+  parentId       String
+  name           String
+  age            Int
+  avatar         String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  currentStreak  Int        @default(0)
+  longestStreak  Int        @default(0)
+  lastPracticeAt DateTime?  // For streak logic  
+  isDeleted      Boolean    @default(false)
+  deletedAt      DateTime?  @db.Timestamptz(6)
+  attempts       Attempt[]
+  parent         ParentUser @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  mastery        Mastery[]
+  sessions       Session[]
 }
 
 model Surah {
   id        Int      @id
   name      String
   nameEn    String
-  verses    Verse[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  verses    Verse[]
 }
 
 model Verse {
-  id              Int      @id
+  id              Int     @id
   surahId         Int
   verseNumber     Int
   textArabic      String
   translation     String
   transliteration String
+  audioUrl        String?
+  surah           Surah   @relation(fields: [surahId], references: [id], onDelete: Cascade)
   words           Word[]
-  surah           Surah    @relation(fields: [surahId], references: [id], onDelete: Cascade)
+
+  @@index([surahId, verseNumber])
 }
 
 model Word {
-  id              Int      @id
+  id              Int       @id
   verseId         Int
   position        Int
   textArabic      String
   translation     String
   transliteration String
   audioUrl        String?
-  verse           Verse    @relation(fields: [verseId], references: [id], onDelete: Cascade)
+  isSeparator     Boolean   @default(false)
   attempts        Attempt[]
   mastery         Mastery[]
+  verse           Verse     @relation(fields: [verseId], references: [id], onDelete: Cascade)
+
+  @@index([verseId, position])
+}
+
+model Session {
+  id                String        @id @default(cuid())
+  childId           String
+  type              SessionType
+  status            SessionStatus @default(ACTIVE)
+  surahId           Int?
+  startVerseId      Int?
+  endVerseId        Int?
+  maxAttempts       Int?
+  requiredSuccesses Int?
+  startedAt         DateTime      @default(now()) @db.Timestamptz(6)
+  completedAt       DateTime?     @db.Timestamptz(6)
+  createdAt         DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt         DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
+  attempts          Attempt[]
+  child             ChildProfile  @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([childId, status])
+  @@index([childId, createdAt])
 }
 
 model Attempt {
-  id              String   @id @default(cuid())
+  id              String       @id @default(cuid())
   childId         String
   wordId          Int
   accuracy        Float
-  createdAt       DateTime @default(now())
-  deviceAttemptId String   @unique
+  createdAt       DateTime     @default(now())
+  deviceAttemptId String       @unique
+  sessionId       String?
+  attemptNumber   Int          @default(1)
   child           ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  session         Session?     @relation(fields: [sessionId], references: [id])
   word            Word         @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@index([childId, sessionId])
+  @@index([childId, createdAt])
 }
 
 model Mastery {
-  id            String   @id @default(cuid())
+  id            String       @id @default(cuid())
   childId       String
   wordId        Int
-  status        String
-  streak        Int
+  status        String       @db.VarChar(20)
+  streak        Int          @default(0)
   lastAttemptAt DateTime
   child         ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
   word          Word         @relation(fields: [wordId], references: [id], onDelete: Cascade)
 
   @@unique([childId, wordId])
+  @@index([childId, status])
+}
+
+model AuditLog {
+  id         String      @id @default(cuid())
+  parentId   String?
+  action     String      @db.VarChar(50)
+  entity     String?
+  entityId   String?
+  details    Json?
+  ipAddress  String?     @db.VarChar(45)
+  userAgent  String?     @db.VarChar(500)
+  createdAt  DateTime    @default(now()) @db.Timestamptz(6)
+  ParentUser ParentUser? @relation(fields: [parentId], references: [id])
+
+  @@index([parentId, createdAt])
+  @@index([action, createdAt])
+}
+
+enum SessionType {
+  VERSE_LESSON
+  MULTI_VERSE_QUIZ
+  SURAH_TEST
+}
+
+enum SessionStatus {
+  ACTIVE
+  COMPLETED
+  ABANDONED
+  FAILED
 }

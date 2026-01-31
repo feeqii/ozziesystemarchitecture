@@ -21,36 +21,50 @@ export async function POST(req: Request) {
       return jsonError("Child not found", 404);
     }
 
-    const created = [];
-    const duplicates = [];
+    // Kareem: Batch check for duplicates instead of N+1 queries
+    const deviceIds = attempts.map((a) => a.deviceAttemptId);
+    const existingAttempts = await prisma.attempt.findMany({
+      where: { deviceAttemptId: { in: deviceIds } },
+      select: { deviceAttemptId: true },
+    });
+    const existingIds = new Set(existingAttempts.map((a) => a.deviceAttemptId));
 
-    for (const attemptPayload of attempts) {
-      if (attemptPayload.childId !== childId) {
-        return jsonError("Attempt childId mismatch", 400);
-      }
-      const existing = await prisma.attempt.findUnique({
-        where: { deviceAttemptId: attemptPayload.deviceAttemptId },
-      });
-      if (existing) {
-        duplicates.push(existing);
-        continue;
-      }
+    // Filter to only new attempts
+    const newAttempts = attempts.filter(
+      (a) => a.childId === childId && !existingIds.has(a.deviceAttemptId)
+    );
 
-      const attempt = await prisma.attempt.create({
-        data: {
-          childId: attemptPayload.childId,
-          wordId: attemptPayload.wordId,
-          accuracy: attemptPayload.accuracy,
-          deviceAttemptId: attemptPayload.deviceAttemptId,
-        },
-      });
-      await upsertMastery(childId, attemptPayload.wordId, attemptPayload.accuracy);
-      created.push(attempt);
+    // Validate all childIds match
+    const mismatch = attempts.find((a) => a.childId !== childId);
+    if (mismatch) {
+      return jsonError("Attempt childId mismatch", 400);
     }
 
+    // Kareem: Use transaction for atomicity
+    const result = await prisma.$transaction(async (tx) => {
+      // Batch create all attempts
+      const createdAttempts = await tx.attempt.createManyAndReturn({
+        data: newAttempts.map((a) => ({
+          childId: a.childId,
+          wordId: a.wordId,
+          accuracy: a.accuracy,
+          deviceAttemptId: a.deviceAttemptId,
+          sessionId: a.sessionId ?? null,
+        })),
+        skipDuplicates: true,
+      });
+
+      // Update mastery for each new attempt
+      for (const attempt of createdAttempts) {
+        await upsertMastery(attempt.childId, attempt.wordId, attempt.accuracy, tx);
+      }
+
+      return createdAttempts;
+    });
+
     return NextResponse.json({
-      createdCount: created.length,
-      duplicateCount: duplicates.length,
+      createdCount: result.length,
+      duplicateCount: attempts.length - result.length,
     });
   } catch (error) {
     return mapAuthError(error) ?? jsonError("Unable to sync attempts", 500);
