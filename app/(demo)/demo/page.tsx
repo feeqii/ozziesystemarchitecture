@@ -209,6 +209,7 @@ export default function DemoPage() {
   const [childAchievements, setChildAchievements] = useState<Achievement[]>([]);
   const [lastSyncResponse, setLastSyncResponse] = useState<SyncResponse | null>(null);
   const [createChildError, setCreateChildError] = useState<string | null>(null);
+  const [creatingChild, setCreatingChild] = useState(false);
 
   useEffect(() => {
     const storedQueue = localStorage.getItem(QUEUE_KEY);
@@ -337,6 +338,21 @@ export default function DemoPage() {
     setSummary(data);
   };
 
+  const refreshGamification = async (childId: string) => {
+    const [xpRes, achievementsRes] = await Promise.all([
+      fetch(`/api/progress/xp?childId=${childId}`),
+      fetch(`/api/children/${childId}/achievements`),
+    ]);
+    if (xpRes.ok) {
+      const data = await xpRes.json();
+      setXpStatus(data);
+    }
+    if (achievementsRes.ok) {
+      const data = await achievementsRes.json();
+      setChildAchievements(data.achievements ?? []);
+    }
+  };
+
   const queuedForChild = useMemo(
     () => queue.filter((item) => item.childId === selectedChildId),
     [queue, selectedChildId]
@@ -356,12 +372,14 @@ export default function DemoPage() {
       return;
     }
 
+    // Online mode: submit immediately and refresh gamification data
     await fetch("/api/progress/attempt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     await refreshSummary(selectedChildId);
+    await refreshGamification(selectedChildId); // Refresh XP and achievements
   };
 
   const syncQueue = async () => {
@@ -383,46 +401,38 @@ export default function DemoPage() {
     setSyncing(false);
   };
 
-  // Phase 2: Helper to refresh gamification data
-  const refreshGamification = async (childId: string) => {
-    const [xpRes, achievementsRes] = await Promise.all([
-      fetch(`/api/progress/xp?childId=${childId}`),
-      fetch(`/api/children/${childId}/achievements`),
-    ]);
-    if (xpRes.ok) setXpStatus(await xpRes.json());
-    if (achievementsRes.ok) {
-      const data = await achievementsRes.json();
-      setChildAchievements(data.achievements ?? []);
-    }
-  };
-
   const createChild = async () => {
-    if (!childName || !childAge) return;
+    if (!childName || !childAge || creatingChild) return;
     setCreateChildError(null);
+    setCreatingChild(true);
 
-    const res = await fetch("/api/children", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: childName,
-        age: Number(childAge),
-        avatar: childAvatar || undefined,
-      }),
-    });
+    try {
+      const res = await fetch("/api/children", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: childName,
+          age: Number(childAge),
+          avatar: childAvatar || undefined,
+        }),
+      });
 
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({ error: "Failed to create child" }));
-      setCreateChildError(error.error || "Failed to create child profile");
-      return;
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ error: "Failed to create child" }));
+        setCreateChildError(error.error || "Failed to create child profile");
+        return;
+      }
+
+      const data = await res.json();
+      setChildren((prev) => [...prev, data.child]);
+      setSelectedChildId(data.child.id);
+      setChildName("");
+      setChildAge("");
+      setChildAvatar("");
+      setCreateChildError(null);
+    } finally {
+      setCreatingChild(false);
     }
-
-    const data = await res.json();
-    setChildren((prev) => [...prev, data.child]);
-    setSelectedChildId(data.child.id);
-    setChildName("");
-    setChildAge("");
-    setChildAvatar("");
-    setCreateChildError(null);
   };
 
   if (checkingParent) {
@@ -536,8 +546,8 @@ export default function DemoPage() {
                         type="button"
                         onClick={() => setChildAvatar(token)}
                         className={`flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all hover:scale-105 ${childAvatar === token
-                            ? "border-primary bg-primary/10"
-                            : "border-border hover:border-primary/50"
+                          ? "border-primary bg-primary/10"
+                          : "border-border hover:border-primary/50"
                           }`}
                         title={label}
                       >
@@ -553,8 +563,8 @@ export default function DemoPage() {
                   <p className="text-sm text-red-600">{createChildError}</p>
                 </div>
               )}
-              <Button className="mt-4" onClick={createChild}>
-                Add child
+              <Button className="mt-4" onClick={createChild} disabled={creatingChild}>
+                {creatingChild ? "Creating..." : "Add child"}
               </Button>
             </Card>
           </TabsContent>
