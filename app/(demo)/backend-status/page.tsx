@@ -1,4 +1,3 @@
-import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
@@ -17,12 +16,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Backend Status Page
+ * Phase 3B: Updated for Supabase Auth
+ */
 export default async function BackendStatusPage() {
-  const { userId } = await auth();
-  if (!userId) {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
     redirect("/sign-in");
   }
 
@@ -89,7 +97,7 @@ export default async function BackendStatusPage() {
             Read-only operational snapshot of the demo database.
           </p>
         </div>
-        <Badge variant="secondary">Clerk-protected</Badge>
+        <Badge variant="secondary">Supabase Auth</Badge>
       </div>
 
       <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

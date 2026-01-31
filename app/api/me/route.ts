@@ -18,7 +18,7 @@ export async function GET() {
   try {
     const userId = await requireUserId();
     const parent = await prisma.parentUser.findUnique({
-      where: { clerkUserId: userId },
+      where: { supabaseUserId: userId },  // Phase 3B: Use supabaseUserId
     });
     return NextResponse.json({ parent });
   } catch (error) {
@@ -53,8 +53,9 @@ export async function POST(req: Request) {
     // Mamoon: Store dobDate as proper Date type (in addition to dob DateTime)
     const dobDate = dob;
 
+    // Phase 3B: Use supabaseUserId instead of clerkUserId
     const parent = await prisma.parentUser.upsert({
-      where: { clerkUserId: userId },
+      where: { supabaseUserId: userId },
       update: {
         name: parsed.data.name ?? undefined, // Only update if provided
         dob,
@@ -62,7 +63,7 @@ export async function POST(req: Request) {
         consentAt: new Date(),
       },
       create: {
-        clerkUserId: userId,
+        supabaseUserId: userId,
         name: parsed.data.name ?? "",
         dob,
         dobDate,
