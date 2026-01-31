@@ -4,13 +4,41 @@ import { childSchema } from "@/lib/validation";
 import { jsonError, mapAuthError } from "@/lib/api";
 import { MAX_CHILDREN, requireParent } from "@/lib/auth";
 
+/**
+ * GET /api/children
+ * Phase 3: Now includes basic stats with eager loading to prevent N+1 queries
+ */
 export async function GET() {
   try {
     const { parent } = await requireParent();
+
+    // Phase 3: Eager load with aggregations to prevent N+1 queries
     const children = await prisma.childProfile.findMany({
-      where: { parentId: parent.id },
+      where: { parentId: parent.id, isDeleted: false },
       orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        name: true,
+        age: true,
+        avatar: true,
+        createdAt: true,
+        updatedAt: true,
+        currentStreak: true,
+        longestStreak: true,
+        lastPracticeAt: true,
+        totalXp: true,
+        level: true,
+        // Eager load counts to avoid N+1
+        _count: {
+          select: {
+            attempts: true,
+            mastery: true,
+            achievements: true,
+          },
+        },
+      },
     });
+
     return NextResponse.json({ children });
   } catch (error) {
     return mapAuthError(error) ?? jsonError("Unable to load children", 500);
