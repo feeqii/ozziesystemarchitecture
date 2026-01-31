@@ -171,6 +171,20 @@ function makeDeviceAttemptId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+// Avatar mapping helper
+const AVATAR_MAP: Record<string, { emoji: string; label: string }> = {
+  AVATAR_1: { emoji: "🦁", label: "Lion" },
+  AVATAR_2: { emoji: "🌙", label: "Crescent" },
+  AVATAR_3: { emoji: "🚀", label: "Rocket" },
+  AVATAR_4: { emoji: "⭐", label: "Star" },
+  AVATAR_5: { emoji: "📖", label: "Book" },
+};
+
+function getAvatarDisplay(avatarToken: string | null | undefined): string {
+  if (!avatarToken || !AVATAR_MAP[avatarToken]) return "👤";
+  return AVATAR_MAP[avatarToken].emoji;
+}
+
 export default function DemoPage() {
   const router = useRouter();
   const [checkingParent, setCheckingParent] = useState(true);
@@ -194,6 +208,7 @@ export default function DemoPage() {
   const [allAchievements, setAllAchievements] = useState<Achievement[]>([]);
   const [childAchievements, setChildAchievements] = useState<Achievement[]>([]);
   const [lastSyncResponse, setLastSyncResponse] = useState<SyncResponse | null>(null);
+  const [createChildError, setCreateChildError] = useState<string | null>(null);
 
   useEffect(() => {
     const storedQueue = localStorage.getItem(QUEUE_KEY);
@@ -383,6 +398,8 @@ export default function DemoPage() {
 
   const createChild = async () => {
     if (!childName || !childAge) return;
+    setCreateChildError(null);
+
     const res = await fetch("/api/children", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -392,13 +409,20 @@ export default function DemoPage() {
         avatar: childAvatar || undefined,
       }),
     });
-    if (!res.ok) return;
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: "Failed to create child" }));
+      setCreateChildError(error.error || "Failed to create child profile");
+      return;
+    }
+
     const data = await res.json();
     setChildren((prev) => [...prev, data.child]);
     setSelectedChildId(data.child.id);
     setChildName("");
     setChildAge("");
     setChildAvatar("");
+    setCreateChildError(null);
   };
 
   if (checkingParent) {
@@ -464,8 +488,9 @@ export default function DemoPage() {
                           : ""
                       }
                     >
+                      <p className="text-4xl mb-2">{getAvatarDisplay(child.avatar)}</p>
                       <p className="text-xs text-muted-foreground">
-                        {child.avatar ? `Avatar: ${child.avatar}` : "No avatar set"}
+                        {child.avatar && AVATAR_MAP[child.avatar] ? AVATAR_MAP[child.avatar].label : "No avatar"}
                       </p>
                     </GlowCard>
                   </button>
@@ -503,15 +528,31 @@ export default function DemoPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="childAvatar">Avatar (optional)</Label>
-                  <Input
-                    id="childAvatar"
-                    value={childAvatar}
-                    onChange={(event) => setChildAvatar(event.target.value)}
-                    placeholder="Lion, Crescent, Rocket"
-                  />
+                  <Label>Avatar (optional)</Label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {Object.entries(AVATAR_MAP).map(([token, { emoji, label }]) => (
+                      <button
+                        key={token}
+                        type="button"
+                        onClick={() => setChildAvatar(token)}
+                        className={`flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all hover:scale-105 ${childAvatar === token
+                            ? "border-primary bg-primary/10"
+                            : "border-border hover:border-primary/50"
+                          }`}
+                        title={label}
+                      >
+                        <span className="text-3xl">{emoji}</span>
+                        <span className="text-xs mt-1">{label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
+              {createChildError && (
+                <div className="mt-4 rounded-lg border border-red-500/20 bg-red-500/10 p-3">
+                  <p className="text-sm text-red-600">{createChildError}</p>
+                </div>
+              )}
               <Button className="mt-4" onClick={createChild}>
                 Add child
               </Button>
